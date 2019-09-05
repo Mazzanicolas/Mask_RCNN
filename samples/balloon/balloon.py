@@ -63,7 +63,7 @@ class BalloonConfig(Config):
 
     # We use a GPU with 12GB memory, which can fit two images.
     # Adjust down if you use a smaller GPU.
-    IMAGES_PER_GPU = 2
+    IMAGES_PER_GPU = 1
 
     # Number of classes (including background)
     NUM_CLASSES = 1 + 1  # Background + balloon
@@ -114,29 +114,30 @@ class BalloonDataset(utils.Dataset):
 
         # The VIA tool saves images in the JSON even if they don't have any
         # annotations. Skip unannotated images.
-        annotations = [a for a in annotations if a['regions']]
+        annotations = [annotation for annotation in annotations if annotation['regions']]
 
         # Add images
-        for a in annotations:
+        for annotation in annotations:
             # Get the x, y coordinaets of points of the polygons that make up
             # the outline of each object instance. These are stores in the
             # shape_attributes (see json format above)
             # The if condition is needed to support VIA versions 1.x and 2.x.
-            if type(a['regions']) is dict:
-                polygons = [r['shape_attributes'] for r in a['regions'].values()]
+            if type(annotation['regions']) is dict:
+                polygons = [region['shape_attributes'] for region in annotation['regions'].values()]
             else:
-                polygons = [r['shape_attributes'] for r in a['regions']] 
+                polygons = [region['shape_attributes'] for region in annotation['regions']] 
 
             # load_mask() needs the image size to convert polygons to masks.
             # Unfortunately, VIA doesn't include it in JSON, so we must read
             # the image. This is only managable since the dataset is tiny.
-            image_path = os.path.join(dataset_dir, a['filename'])
+            image_path = os.path.join(dataset_dir, annotation['filename'])
+            # TODO: from PIL import Image; img = Image.open(img_dir); is faster
             image = skimage.io.imread(image_path)
             height, width = image.shape[:2]
 
             self.add_image(
                 "balloon",
-                image_id=a['filename'],  # use file name as a unique image id
+                image_id=annotation['filename'],  # use file name as a unique image id
                 path=image_path,
                 width=width, height=height,
                 polygons=polygons)

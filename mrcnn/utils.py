@@ -261,17 +261,20 @@ class Dataset(object):
 
     def add_class(self, source, class_id, class_name):
         assert "." not in source, "Source name cannot contain a dot"
-        # Does the class exist already?
-        for info in self.class_info:
-            if info['source'] == source and info["id"] == class_id:
-                # source.class_id combination already available, skip
-                return
+        if self.class_already_exist(source, class_id):
+            return
         # Add the class
         self.class_info.append({
             "source": source,
             "id": class_id,
             "name": class_name,
         })
+    
+    def class_already_exist(self,  source, class_id):
+        for info in self.class_info:
+            if info['source'] == source and info["id"] == class_id:
+                return True
+        return False
 
     def add_image(self, source, image_id, path, **kwargs):
         image_info = {
